@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Andro6Tube</string>
+    <string name="search_hint">Поиск на YouTube</string>
+    <string name="search">Найти</string>
+    <string name="tab_search">Поиск</string>
+    <string name="tab_history">История</string>
+    <string name="tab_later">Позже</string>
+    <string name="settings">Настройки</string>
+    <string name="empty_search">Введите запрос и нажмите «Найти»</string>
+    <string name="empty_history">История пуста</string>
+    <string name="empty_later">Список «Смотреть позже» пуст.\nДолгое нажатие на видео → «Смотреть позже»</string>
+    <string name="up_next">Далее</string>
+    <string name="related">Похожие</string>
+    <string name="later_add">+ Позже</string>
+    <string name="later_remove">✓ В «Позже»</string>
+    <string name="retry">Повторить</string>
+    <string name="key_test">Тест кнопок руля / джойстика</string>
+</resources>

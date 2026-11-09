@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/surface"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:visibility="gone">
+
+    <TextView
+        android:id="@+id/miniTitle"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/ctrl"
+        android:layout_weight="1"
+        android:background="@drawable/bg_btn"
+        android:clickable="true"
+        android:ellipsize="end"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:maxLines="2"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textColor="@color/text"
+        android:textSize="@dimen/text_sub" />
+
+    <ImageButton
+        android:id="@+id/miniPrev"
+        style="@style/CtrlBtn"
+        android:layout_marginStart="10dp"
+        android:contentDescription="prev"
+        android:src="@drawable/ic_prev" />
+
+    <ImageButton
+        android:id="@+id/miniPlay"
+        style="@style/CtrlBtn"
+        android:layout_marginStart="10dp"
+        android:contentDescription="play"
+        android:src="@drawable/ic_pause" />
+
+    <ImageButton
+        android:id="@+id/miniNext"
+        style="@style/CtrlBtn"
+        android:layout_marginStart="10dp"
+        android:contentDescription="next"
+        android:src="@drawable/ic_next" />
+</LinearLayout>

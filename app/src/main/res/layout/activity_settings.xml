@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings"
+            android:textColor="@color/text"
+            android:textSize="26sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Максимальное качество (H.264, аппаратное декодирование)"
+            android:textColor="@color/text2"
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:id="@+id/qualityRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal" />
+
+        <CheckBox
+            android:id="@+id/prefer30"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/btn_h"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_item"
+            android:buttonTint="@color/accent"
+            android:text="Предпочитать 30 кадров/с (плавнее на слабом ГУ)"
+            android:textColor="@color/text"
+            android:textSize="18sp" />
+
+        <CheckBox
+            android:id="@+id/autoplay"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/btn_h"
+            android:background="@drawable/bg_item"
+            android:buttonTint="@color/accent"
+            android:text="Автовоспроизведение похожих видео"
+            android:textColor="@color/text"
+            android:textSize="18sp" />
+
+        <CheckBox
+            android:id="@+id/resume"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/btn_h"
+            android:background="@drawable/bg_item"
+            android:buttonTint="@color/accent"
+            android:text="Продолжать с места остановки"
+            android:textColor="@color/text"
+            android:textSize="18sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Язык и страна контента (например: ru / UZ)"
+            android:textColor="@color/text2"
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/language"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/btn_h"
+                android:layout_weight="1"
+                android:background="@drawable/bg_edit"
+                android:inputType="text"
+                android:paddingStart="16dp"
+                android:singleLine="true"
+                android:textColor="@color/text"
+                android:textSize="20sp" />
+
+            <EditText
+                android:id="@+id/country"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/btn_h"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_edit"
+                android:inputType="textCapCharacters"
+                android:paddingStart="16dp"
+                android:singleLine="true"
+                android:textColor="@color/text"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/checkUpdate"
+            style="@style/Btn"
+            android:layout_width="match_parent"
+            android:layout_marginTop="24dp"
+            android:text="Проверить обновления" />
+
+        <Button
+            android:id="@+id/keyTest"
+            style="@style/Btn"
+            android:layout_width="match_parent"
+            android:layout_marginTop="10dp"
+            android:text="@string/key_test" />
+
+        <Button
+            android:id="@+id/clearHistory"
+            style="@style/Btn"
+            android:layout_width="match_parent"
+            android:layout_marginTop="10dp"
+            android:text="Очистить историю" />
+
+        <TextView
+            android:id="@+id/info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:textColor="@color/text2"
+            android:textIsSelectable="true"
+            android:textSize="14sp" />
+    </LinearLayout>
+</ScrollView>
