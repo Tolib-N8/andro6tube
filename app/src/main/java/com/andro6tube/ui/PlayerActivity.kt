@@ -56,6 +56,8 @@ class PlayerActivity : BaseActivity() {
         b.btnQuality.setOnClickListener { showQualityDialog() }
         b.btnLater.setOnClickListener { toggleLater() }
         b.btnFull.setOnClickListener { setFullscreen(!fullscreen) }
+        // На ГУ нет системной «Назад»: своя кнопка поверх видео
+        b.btnBack.setOnClickListener { if (fullscreen) setFullscreen(false) else finish() }
 
         b.videoBox.setOnClickListener {
             if (Playback.state.value.error != null) Playback.retry() else Playback.togglePlay()
@@ -189,7 +191,9 @@ class PlayerActivity : BaseActivity() {
         return when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> { seek(if (e.repeatCount > 3) -30_000 else -10_000); true }
             KeyEvent.KEYCODE_DPAD_RIGHT -> { seek(if (e.repeatCount > 3) 30_000 else 10_000); true }
-            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> fullscreen // в полноэкранном фокус не уходит
+            // Вверх с видео — на кнопку «Назад» (в т.ч. в полноэкранном режиме)
+            KeyEvent.KEYCODE_DPAD_UP -> { b.btnBack.requestFocus(); true }
+            KeyEvent.KEYCODE_DPAD_DOWN -> fullscreen // в полноэкранном фокус не уходит вниз
             else -> false
         }
     }
@@ -221,7 +225,7 @@ class PlayerActivity : BaseActivity() {
     // ------------------------------------------------------------- Экран
 
     private fun applyVideoHeight() {
-        val lp = b.videoBox.layoutParams as LinearLayout.LayoutParams
+        val lp = b.videoWrap.layoutParams as LinearLayout.LayoutParams
         if (fullscreen) {
             lp.height = 0
             lp.weight = 1f
@@ -232,7 +236,7 @@ class PlayerActivity : BaseActivity() {
             lp.height = minOf(w * 9 / 16, h / 2)
             lp.weight = 0f
         }
-        b.videoBox.layoutParams = lp
+        b.videoWrap.layoutParams = lp
     }
 
     private fun setFullscreen(on: Boolean) {
@@ -267,6 +271,7 @@ class PlayerActivity : BaseActivity() {
         AlertDialog.Builder(this)
             .setTitle(title)
             .setItems(labels) { _, i -> Playback.setQuality(heights[i]) }
+            .setNegativeButton("Отмена", null)
             .show()
     }
 

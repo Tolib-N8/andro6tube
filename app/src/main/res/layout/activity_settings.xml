@@ -9,12 +9,28 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/settings"
-            android:textColor="@color/text"
-            android:textSize="26sp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                style="@style/CtrlBtn"
+                android:layout_width="@dimen/btn_h"
+                android:layout_height="@dimen/btn_h"
+                android:contentDescription="Назад"
+                android:src="@drawable/ic_back" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="@string/settings"
+                android:textColor="@color/text"
+                android:textSize="26sp" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"

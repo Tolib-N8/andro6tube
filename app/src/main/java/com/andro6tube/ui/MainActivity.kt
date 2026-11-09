@@ -236,6 +236,7 @@ class MainActivity : BaseActivity() {
             AlertDialog.Builder(this@MainActivity)
                 .setTitle(v.title)
                 .setItems(options.map { it.first }.toTypedArray()) { _, which -> options[which].second() }
+                .setNegativeButton("Отмена", null)
                 .show()
         }
     }

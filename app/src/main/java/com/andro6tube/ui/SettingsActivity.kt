@@ -31,6 +31,7 @@ class SettingsActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         b = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(b.root)
+        b.btnBack.setOnClickListener { finish() }
 
         qualities.forEachIndexed { i, h ->
             val btn = Button(this, null, 0, R.style.Btn).apply {

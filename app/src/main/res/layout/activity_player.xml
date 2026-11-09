@@ -7,9 +7,14 @@
     android:orientation="vertical">
 
     <FrameLayout
+        android:id="@+id/videoWrap"
+        android:layout_width="match_parent"
+        android:layout_height="240dp">
+
+    <FrameLayout
         android:id="@+id/videoBox"
         android:layout_width="match_parent"
-        android:layout_height="240dp"
+        android:layout_height="match_parent"
         android:background="@drawable/bg_video"
         android:clickable="true"
         android:focusable="true"
@@ -55,6 +60,19 @@
             android:textColor="@android:color/white"
             android:textSize="26sp"
             android:visibility="gone" />
+    </FrameLayout>
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            style="@style/CtrlBtn"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="top|start"
+            android:layout_margin="10dp"
+            android:background="@drawable/bg_ctrl_overlay"
+            android:contentDescription="Назад"
+            android:padding="14dp"
+            android:src="@drawable/ic_back" />
     </FrameLayout>
 
     <LinearLayout

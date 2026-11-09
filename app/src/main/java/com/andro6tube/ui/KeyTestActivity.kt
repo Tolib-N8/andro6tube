@@ -20,6 +20,7 @@ class KeyTestActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         b = ActivityKeyTestBinding.inflate(layoutInflater)
         setContentView(b.root)
+        b.btnBack.setOnClickListener { finish() }
         b.log.text = KeyLog.all().takeLast(30).joinToString("\n")
         KeyLog.listener = { line ->
             b.log.append(line + "\n")
@@ -34,6 +35,10 @@ class KeyTestActivity : ComponentActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // OK джойстика на кнопке «←» — выход (остальные клавиши только логируем)
+        val ok = event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER
+        if (ok && currentFocus === b.btnBack) return super.dispatchKeyEvent(event)
+
         val act = when (event.action) {
             KeyEvent.ACTION_DOWN -> "DOWN"
             KeyEvent.ACTION_UP -> "UP"

@@ -5,12 +5,29 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Нажимайте кнопки на руле и джойстике.\nЗдесь появятся их коды. «Назад» дважды — выход."
-        android:textColor="@color/text"
-        android:textSize="18sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            style="@style/CtrlBtn"
+            android:layout_width="@dimen/btn_h"
+            android:layout_height="@dimen/btn_h"
+            android:contentDescription="Назад"
+            android:src="@drawable/ic_back" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="Нажимайте кнопки на руле и джойстике — здесь появятся их коды.\nВыход: кнопка ← на экране или «Назад» дважды."
+            android:textColor="@color/text"
+            android:textSize="18sp" />
+    </LinearLayout>
 
     <ScrollView
         android:id="@+id/scroll"
