@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import com.andro6tube.BuildConfig
+import com.andro6tube.data.Prefs
 import com.andro6tube.net.Http
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -123,17 +124,17 @@ object Updater {
      * без root появится системное окно подтверждения).
      */
     suspend fun install(context: Context, file: File): Boolean = withContext(Dispatchers.IO) {
-        if (hasRoot() && installWithRoot(file)) return@withContext true
+        if (Prefs.updateViaRoot && hasRoot() && installWithRoot(file)) return@withContext true
         installWithSession(context, file)
         true
     }
 
-    private fun hasRoot(): Boolean =
+    fun hasRoot(): Boolean =
         listOf("/system/xbin/su", "/system/bin/su", "/sbin/su", "/su/bin/su").any { File(it).exists() }
 
     private fun installWithRoot(file: File): Boolean = try {
-        // Перезапуск после установки: pm убьёт процесс, am снова откроет приложение
-        val cmd = "pm install -r '${file.absolutePath}' && am start -n ${BuildConfig.APPLICATION_ID}/.ui.MainActivity"
+        // pm убьёт наш процесс; заново приложение откроет UpdatedReceiver
+        val cmd = "pm install -r '${file.absolutePath}'"
         val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
         // readText ждёт завершения su; waitFor(timeout) недоступен на Android 6
         val out = p.inputStream.bufferedReader().readText()

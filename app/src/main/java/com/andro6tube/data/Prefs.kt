@@ -38,6 +38,11 @@ object Prefs {
         get() = sp.getString("country", "UZ") ?: "UZ"
         set(v) = sp.edit().putString("country", v).apply()
 
+    /** Ставить обновления молча через root (если на ГУ есть su). */
+    var updateViaRoot: Boolean
+        get() = sp.getBoolean("update_via_root", true)
+        set(v) = sp.edit().putBoolean("update_via_root", v).apply()
+
     var lastQuery: String
         get() = sp.getString("last_query", "") ?: ""
         set(v) = sp.edit().putString("last_query", v).apply()

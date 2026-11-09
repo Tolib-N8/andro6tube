@@ -55,6 +55,10 @@ class SettingsActivity : BaseActivity() {
 
         b.checkUpdate.text = "Проверить обновления (сейчас ${BuildConfig.VERSION_NAME})"
         b.checkUpdate.setOnClickListener { checkUpdate() }
+        b.updateRoot.isChecked = Prefs.updateViaRoot
+        b.updateRoot.text = if (Updater.hasRoot()) "Ставить обновления молча через root"
+        else "Ставить обновления молча через root (root не найден)"
+        b.updateRoot.setOnCheckedChangeListener { _, c -> Prefs.updateViaRoot = c }
         b.keyTest.setOnClickListener { startActivity(Intent(this, KeyTestActivity::class.java)) }
         b.clearHistory.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { Db.get(this@SettingsActivity).clearHistory() }

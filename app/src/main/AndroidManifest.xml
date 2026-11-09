@@ -80,6 +80,14 @@
             android:name=".update.UpdateReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".update.UpdatedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Кнопки руля, когда сессия неактивна (резервный путь) -->
         <receiver
             android:name="androidx.media3.session.MediaButtonReceiver"

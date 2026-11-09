@@ -109,6 +109,16 @@
             android:layout_marginTop="24dp"
             android:text="Проверить обновления" />
 
+        <CheckBox
+            android:id="@+id/updateRoot"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/btn_h"
+            android:background="@drawable/bg_item"
+            android:buttonTint="@color/accent"
+            android:text="Ставить обновления молча через root"
+            android:textColor="@color/text"
+            android:textSize="18sp" />
+
         <Button
             android:id="@+id/keyTest"
             style="@style/Btn"
