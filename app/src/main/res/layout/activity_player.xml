@@ -124,7 +124,8 @@
                 android:layout_weight="1"
                 android:background="@drawable/bg_item"
                 android:focusable="true"
-                android:progressBackgroundTint="#55FFFFFF"
+                android:progressBackgroundTint="#33FFFFFF"
+                android:secondaryProgressTint="#99FFFFFF"
                 android:progressTint="@color/accent"
                 android:thumbTint="@color/accent" />
 

@@ -21,6 +21,10 @@ object Playback {
         val heights: List<Int> = emptyList(),
         val decoder: String = "",
         val playing: Boolean = false,
+        /** Сколько видео уже скачано на диск, 0..100; -1 — неизвестно/не качается. */
+        val downloadedPct: Int = -1,
+        /** Временное сообщение без ошибки, например «Нет интернета — жду…». */
+        val notice: String? = null,
     ) {
         val current: Video? get() = queue.getOrNull(index)
     }

@@ -49,6 +49,22 @@ class PlaybackService : MediaSessionService() {
     private var retried = false
     private var videoEnabled = true
     private var currentHeightOverride = 0
+    private var netRetryJob: Job? = null
+    private val lastOp = HashMap<String, Long>()
+    private val prefetcher by lazy {
+        Prefetcher(
+            scope,
+            onProgress = { pct -> st.value = st.value.copy(downloadedPct = pct) },
+            refresh = { Repo.streamInfo(st.value.current!!.url, force = true) },
+        )
+    }
+
+    /**
+     * Мы — текущий медиаисточник: пользователь запустил у нас видео и звук не забрало
+     * другое приложение. Только тогда кнопки руля (вне нашего окна) управляют нами.
+     */
+    var ownsMedia = false
+        private set
 
     private val st get() = Playback.mutableState
 
@@ -67,7 +83,8 @@ class PlaybackService : MediaSessionService() {
 
         // Умеренные буферы: старому ГУ не нужно держать минуты видео в памяти
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(15_000, 40_000, 1_000, 2_500)
+            // Основной запас — на диске (Prefetcher), в памяти держим до 2 минут
+            .setBufferDurationsMs(30_000, 120_000, 1_500, 5_000)
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
@@ -138,6 +155,8 @@ class PlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         saveCurrentPosition()
+        prefetcher.stop()
+        ownsMedia = false
         Playback.service = null
         scope.cancel()
         session.release()
@@ -148,13 +167,23 @@ class PlaybackService : MediaSessionService() {
 
     // ------------------------------------------------------------------ Очередь
 
+    /** Одно нажатие может прийти двумя путями (сессия + broadcast) — второе игнорируем. */
+    private fun debounced(op: String): Boolean {
+        val now = android.os.SystemClock.uptimeMillis()
+        val last = lastOp[op] ?: 0L
+        lastOp[op] = now
+        return now - last < 400
+    }
+
     fun setQueue(queue: List<Video>, index: Int) {
+        ownsMedia = true
         saveCurrentPosition()
         st.value = st.value.copy(queue = queue, index = index.coerceIn(0, queue.lastIndex), related = emptyList())
         load(resetOverride = true)
     }
 
     fun next() {
+        if (debounced("next")) return
         val s = st.value
         when {
             s.index < s.queue.lastIndex -> moveTo(s.index + 1)
@@ -164,6 +193,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     fun previous() {
+        if (debounced("prev")) return
         val s = st.value
         if (s.index > 0) moveTo(s.index - 1) else exo.seekTo(0)
     }
@@ -196,6 +226,8 @@ class PlaybackService : MediaSessionService() {
     fun seekTo(ms: Long) = exo.seekTo(ms)
 
     fun togglePlay() {
+        if (debounced("toggle")) return
+        ownsMedia = true
         if (exo.playbackState == Player.STATE_IDLE && st.value.error != null) {
             retry(); return
         }
@@ -243,13 +275,15 @@ class PlaybackService : MediaSessionService() {
         if (resetOverride) currentHeightOverride = 0
         loadJob?.cancel()
         prefetchJob?.cancel()
+        netRetryJob?.cancel()
+        prefetcher.stop()
         if (!force) retried = false
-        st.value = st.value.copy(loading = true, error = null)
+        st.value = st.value.copy(loading = true, error = null, notice = null, downloadedPct = -1)
         exo.stop()
 
         loadJob = scope.launch {
             try {
-                val info = Repo.streamInfo(video.url, force)
+                val info = fetchInfoWaitingForNetwork(video.url, force)
                 val full = if (video.title.isEmpty()) Video.from(info) else video
                 if (full !== video) replaceCurrent(full)
 
@@ -262,6 +296,12 @@ class PlaybackService : MediaSessionService() {
                 exo.setMediaSource(built.source, resumeAt)
                 exo.prepare()
                 exo.playWhenReady = true
+
+                // Докачиваем видео целиком на диск, начиная с места воспроизведения
+                if (Prefs.fullDownload && built.targets.isNotEmpty()) {
+                    val durMs = info.duration * 1000.0
+                    prefetcher.start(built.targets, if (durMs > 0) resumeAt / durMs else 0.0)
+                }
 
                 st.value = st.value.copy(
                     loading = false,
@@ -279,6 +319,28 @@ class PlaybackService : MediaSessionService() {
             }
         }
     }
+
+    /** Нет сети — не показываем ошибку, а ждём и повторяем (1→15 с). */
+    private suspend fun fetchInfoWaitingForNetwork(url: String, force: Boolean): org.schabi.newpipe.extractor.stream.StreamInfo {
+        var attempt = 0
+        while (true) {
+            try {
+                val info = Repo.streamInfo(url, force)
+                if (attempt > 0) st.value = st.value.copy(notice = null)
+                return info
+            } catch (e: Exception) {
+                if (e is CancellationException || !isNetworkError(e)) throw e
+                attempt++
+                Log.w(TAG, "сеть недоступна (${e.message}), попытка $attempt")
+                st.value = st.value.copy(notice = "Нет интернета — жду и повторяю…")
+                delay(minOf(1_000L * attempt, 15_000L))
+            }
+        }
+    }
+
+    /** Сетевая ошибка где-то в цепочке причин (NewPipe иногда заворачивает её в свою). */
+    private fun isNetworkError(e: Throwable): Boolean =
+        generateSequence(e) { it.cause }.take(8).any { it is java.io.IOException }
 
     private fun replaceCurrent(v: Video) {
         val s = st.value
@@ -317,7 +379,18 @@ class PlaybackService : MediaSessionService() {
             }
         }
 
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) {
+                ownsMedia = false
+                KeyLog.add("[Session] звук забрало другое приложение — кнопки руля отданы ему")
+            }
+        }
+
         override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying) {
+                ownsMedia = true
+                if (st.value.notice != null) st.value = st.value.copy(notice = null)
+            }
             st.value = st.value.copy(playing = isPlaying)
             if (!isPlaying) saveCurrentPosition()
         }
@@ -331,6 +404,18 @@ class PlaybackService : MediaSessionService() {
             ) {
                 retried = true
                 retry()
+                return
+            }
+            // Обрыв сети, который не победили повторы, — перезапуск с того же места
+            if (error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT
+            ) {
+                st.value = st.value.copy(notice = "Нет интернета — жду и повторяю…")
+                netRetryJob?.cancel()
+                netRetryJob = scope.launch {
+                    delay(3_000)
+                    reloadKeepingPosition()
+                }
                 return
             }
             st.value = st.value.copy(loading = false, error = humanError(error))
@@ -367,6 +452,16 @@ class PlaybackService : MediaSessionService() {
     // ------------------------------------------------------------------ Медиакнопки
 
     private val sessionCallback = object : MediaSession.Callback {
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+        ): MediaSession.ConnectionResult {
+            if (controller.packageName != packageName) {
+                KeyLog.add("[Session] подключился ${controller.packageName}")
+            }
+            return super.onConnect(session, controller)
+        }
+
         override fun onMediaButtonEvent(
             session: MediaSession,
             controllerInfo: MediaSession.ControllerInfo,
@@ -374,8 +469,9 @@ class PlaybackService : MediaSessionService() {
         ): Boolean {
             @Suppress("DEPRECATION")
             val ev = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
-            if (ev != null) KeyLog.add("MediaSession: ${KeyEvent.keyCodeToString(ev.keyCode)} action=${ev.action} from=${controllerInfo.packageName}")
-            return false // стандартная обработка → QueuePlayer
+            if (ev != null) KeyLog.add("[Session] ${KeyEvent.keyCodeToString(ev.keyCode)} action=${ev.action} from=${controllerInfo.packageName}")
+            // В «Тесте кнопок» только показываем, иначе — стандартная обработка → QueuePlayer
+            return KeyLog.testScreenOpen
         }
     }
 

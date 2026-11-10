@@ -30,6 +30,12 @@ class QueuePlayer(
     }
 
     override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> {
+        val name = when (seekCommand) {
+            COMMAND_SEEK_TO_NEXT, COMMAND_SEEK_TO_NEXT_MEDIA_ITEM -> "следующее"
+            COMMAND_SEEK_TO_PREVIOUS, COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM -> "предыдущее"
+            else -> null
+        }
+        if (name != null) com.andro6tube.ui.KeyLog.add("[Session] команда «$name»")
         when (seekCommand) {
             COMMAND_SEEK_TO_NEXT, COMMAND_SEEK_TO_NEXT_MEDIA_ITEM -> onNext()
             COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM -> onPrevious()

@@ -43,6 +43,11 @@ object Prefs {
         get() = sp.getBoolean("update_via_root", true)
         set(v) = sp.edit().putBoolean("update_via_root", v).apply()
 
+    /** Докачивать видео целиком на диск (спасает при слабом интернете). */
+    var fullDownload: Boolean
+        get() = sp.getBoolean("full_download", true)
+        set(v) = sp.edit().putBoolean("full_download", v).apply()
+
     var lastQuery: String
         get() = sp.getString("last_query", "") ?: ""
         set(v) = sp.edit().putString("last_query", v).apply()

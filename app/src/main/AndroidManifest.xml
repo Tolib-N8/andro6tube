@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -8,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Только для диагностики кнопок, выдаётся вручную: adb shell pm grant com.andro6tube android.permission.READ_LOGS -->
+    <uses-permission android:name="android.permission.READ_LOGS" tools:ignore="ProtectedPermissions" />
 
     <!-- ГУ без тачпада/с джойстиком: не требуем сенсорный экран -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -85,6 +88,36 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Кнопки руля через спецвозможности: клавиши на уровне системы ввода -->
+        <service
+            android:name=".keys.SteeringKeyService"
+            android:exported="true"
+            android:label="@string/a11y_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/steering_keys_service" />
+        </service>
+
+        <!-- Широковещательные команды ГУ для сторонних плееров -->
+        <receiver
+            android:name=".keys.HeadUnitKeyReceiver"
+            android:exported="true">
+            <intent-filter android:priority="999">
+                <action android:name="com.android.music.musicservicecommand" />
+                <action android:name="com.android.music.musicservicecommand.next" />
+                <action android:name="com.android.music.musicservicecommand.previous" />
+                <action android:name="com.android.music.musicservicecommand.togglepause" />
+                <action android:name="com.android.music.musicservicecommand.pause" />
+                <action android:name="com.android.music.musicservicecommand.play" />
+                <action android:name="com.microntek.irkeyDown" />
+                <!-- MEDIA_BUTTON сюда НЕ добавлять: Media3 требует ровно один такой приёмник -->
             </intent-filter>
         </receiver>
 

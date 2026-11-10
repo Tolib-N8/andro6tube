@@ -16,4 +16,6 @@
     <string name="later_remove">✓ В «Позже»</string>
     <string name="retry">Повторить</string>
     <string name="key_test">Тест кнопок руля / джойстика</string>
+    <string name="a11y_label">Andro6Tube: кнопки руля</string>
+    <string name="a11y_desc">Позволяет переключать видео кнопками на руле. Перехватывает только медиакнопки (след./пред./пауза) и только пока играет Andro6Tube. Содержимое экрана не читается.</string>
 </resources>

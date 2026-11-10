@@ -129,8 +129,10 @@ class PlayerActivity : BaseActivity() {
         b.title.text = cur?.title?.ifEmpty { "Загрузка…" } ?: ""
         b.sub.text = listOfNotNull(cur?.uploader, cur?.views?.let(::formatViews)).filter { it.isNotBlank() }.joinToString(" • ")
         b.loading.visibility = if (s.loading) View.VISIBLE else View.GONE
-        b.error.visibility = if (s.error != null) View.VISIBLE else View.GONE
-        b.error.text = s.error?.let { "$it\n\nНажмите OK для повтора" }
+        // notice — временное сообщение (ждём сеть), error — ошибка с повтором по OK
+        val overlay = s.error?.let { "$it\n\nНажмите OK для повтора" } ?: s.notice
+        b.error.visibility = if (overlay != null) View.VISIBLE else View.GONE
+        b.error.text = overlay
         b.btnPlay.setImageResource(if (s.playing) R.drawable.ic_pause else R.drawable.ic_play)
         b.btnQuality.text = if (s.quality.isEmpty()) "Качество" else "Качество: ${s.quality}"
 
@@ -171,7 +173,12 @@ class PlayerActivity : BaseActivity() {
                     val maxSec = (dur / 1000).toInt()
                     if (b.seek.max != maxSec) b.seek.max = maxSec
                     b.seek.progress = (pos / 1000).toInt()
-                    b.dur.text = fmt(dur)
+                    // Второй слой полосы: сколько уже скачано (диск) или в буфере (память)
+                    val pct = Playback.state.value.downloadedPct
+                    val buffered = (svc.player.bufferedPosition / 1000).toInt()
+                    val downloaded = if (pct >= 0) maxSec * pct / 100 else 0
+                    b.seek.secondaryProgress = maxOf(buffered, downloaded)
+                    b.dur.text = if (pct in 0..99) "${fmt(dur)} · ↓$pct%" else fmt(dur)
                 } else {
                     b.dur.text = ""
                 }

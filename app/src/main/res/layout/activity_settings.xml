@@ -118,6 +118,47 @@
                 android:textSize="20sp" />
         </LinearLayout>
 
+        <CheckBox
+            android:id="@+id/fullDownload"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/btn_h"
+            android:background="@drawable/bg_item"
+            android:buttonTint="@color/accent"
+            android:text="Скачивать видео целиком (не застревает на слабом интернете)"
+            android:textColor="@color/text"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/clearCache"
+            style="@style/Btn"
+            android:layout_width="match_parent"
+            android:layout_marginTop="10dp"
+            android:text="Очистить кэш видео" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Кнопки руля"
+            android:textColor="@color/text2"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/steeringKeys"
+            style="@style/Btn"
+            android:layout_width="match_parent"
+            android:layout_marginTop="8dp"
+            android:text="Включить кнопки руля" />
+
+        <TextView
+            android:id="@+id/steeringHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/text2"
+            android:textIsSelectable="true"
+            android:textSize="14sp" />
+
         <Button
             android:id="@+id/checkUpdate"
             style="@style/Btn"

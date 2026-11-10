@@ -10,6 +10,10 @@ object KeyLog {
     private val main = Handler(Looper.getMainLooper())
     var listener: ((String) -> Unit)? = null
 
+    /** Открыт экран «Тест кнопок»: клавиши только логируются, действия не выполняются. */
+    @Volatile
+    var testScreenOpen = false
+
     fun add(line: String) {
         Log.i("A6Keys", line)
         main.post {

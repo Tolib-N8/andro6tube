@@ -34,10 +34,18 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 object SourceBuilder {
     private const val TAG = "A6Source"
 
-    class Result(val source: MediaSource, val label: String, val height: Int)
+    class Result(
+        val source: MediaSource,
+        val label: String,
+        val height: Int,
+        /** Потоки для фоновой докачки до конца. */
+        val targets: List<Prefetcher.Target> = emptyList(),
+    )
 
-    private val dashDs by lazy { YtDataSource.Factory(rangeParam = true, rnParam = true) }
-    private val progressiveDs by lazy { YtDataSource.Factory(rangeParam = false, rnParam = true) }
+    // Всё читается через дисковый кэш (MediaCache), туда же докачивает Prefetcher
+    private val dashDs by lazy { MediaCache.factory(YtDataSource.Factory(rangeParam = true, rnParam = true)) }
+    private val progressiveDs by lazy { MediaCache.factory(YtDataSource.Factory(rangeParam = false, rnParam = true)) }
+    private val errorPolicy by lazy { PatientErrorPolicy() }
     private val hlsDs by lazy {
         OkHttpDataSource.Factory(Http.client)
             .setUserAgent(YoutubeParsingHelper.getVisionOsUserAgent(null))
@@ -58,7 +66,7 @@ object SourceBuilder {
         if (info.streamType == StreamType.LIVE_STREAM || info.streamType == StreamType.AUDIO_LIVE_STREAM) {
             val hls = info.hlsUrl
             require(!hls.isNullOrEmpty()) { "Трансляция недоступна" }
-            val src = HlsMediaSource.Factory(hlsDs).createMediaSource(
+            val src = HlsMediaSource.Factory(hlsDs).setLoadErrorHandlingPolicy(errorPolicy).createMediaSource(
                 MediaItem.Builder().setUri(hls).setMediaMetadata(meta).setMediaId(video.url).build()
             )
             return Result(src, "LIVE", 0)
@@ -72,7 +80,10 @@ object SourceBuilder {
                 val asrc = dashSource(info, a, null, video.url + "#a")
                 val fps = if (v.fps > 30) "${v.fps}" else ""
                 Log.i(TAG, "video itag=${v.itag} ${v.codec} ${v.height}p${v.fps}  audio itag=${a.itag} ${a.averageBitrate}k")
-                return Result(MergingMediaSource(true, vs, asrc), "${v.height}p$fps", v.height)
+                return Result(
+                    MergingMediaSource(true, vs, asrc), "${v.height}p$fps", v.height,
+                    targets = listOfNotNull(target(v), target(a)),
+                )
             } catch (e: Exception) {
                 Log.w(TAG, "DASH build failed, falling back", e)
             }
@@ -84,20 +95,30 @@ object SourceBuilder {
             .maxByOrNull { it.height }
         if (muxed != null) {
             Log.i(TAG, "muxed itag=${muxed.itag} ${muxed.height}p")
-            val src = ProgressiveMediaSource.Factory(progressiveDs).createMediaSource(
-                MediaItem.Builder().setUri(muxed.content).setMediaMetadata(meta).setMediaId(video.url).build()
-            )
-            return Result(src, "${muxed.height}p", muxed.height)
+            val src = ProgressiveMediaSource.Factory(progressiveDs)
+                .setLoadErrorHandlingPolicy(errorPolicy)
+                .createMediaSource(
+                    MediaItem.Builder().setUri(muxed.content).setMediaMetadata(meta).setMediaId(video.url).build()
+                )
+            return Result(src, "${muxed.height}p", muxed.height, targets = listOfNotNull(target(muxed)))
         }
 
         val hls = info.hlsUrl
         if (!hls.isNullOrEmpty()) {
-            val src = HlsMediaSource.Factory(hlsDs).createMediaSource(
+            val src = HlsMediaSource.Factory(hlsDs).setLoadErrorHandlingPolicy(errorPolicy).createMediaSource(
                 MediaItem.Builder().setUri(hls).setMediaMetadata(meta).setMediaId(video.url).build()
             )
             return Result(src, "HLS", 0)
         }
         error("Нет подходящего потока H.264 для этого видео")
+    }
+
+    /** Докачиваем только цельные файлы (не сегментированные OTF-потоки). */
+    private fun target(s: Stream): Prefetcher.Target? {
+        val itag = s.itagItem ?: return null
+        if (s.deliveryMethod != DeliveryMethod.PROGRESSIVE_HTTP || !s.isUrl) return null
+        val len = itag.contentLength
+        return if (len > 0) Prefetcher.Target(itag.id, s.content, len) else null
     }
 
     private fun h264VideoOnly(info: StreamInfo): List<VideoStream> = info.videoOnlyStreams.filter {
@@ -144,6 +165,7 @@ object SourceBuilder {
         val item = MediaItem.Builder().setUri(uri).setMediaId(id)
         if (meta != null) item.setMediaMetadata(meta)
         return DashMediaSource.Factory(DefaultDashChunkSource.Factory(dashDs), dashDs)
+            .setLoadErrorHandlingPolicy(errorPolicy)
             .createMediaSource(parsed, item.build())
     }
 }

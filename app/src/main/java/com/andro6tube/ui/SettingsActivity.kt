@@ -60,6 +60,16 @@ class SettingsActivity : BaseActivity() {
         b.updateRoot.text = if (Updater.hasRoot()) "Ставить обновления молча через root"
         else "Ставить обновления молча через root (root не найден)"
         b.updateRoot.setOnCheckedChangeListener { _, c -> Prefs.updateViaRoot = c }
+        b.fullDownload.isChecked = Prefs.fullDownload
+        b.fullDownload.setOnCheckedChangeListener { _, c -> Prefs.fullDownload = c }
+        b.clearCache.setOnClickListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                com.andro6tube.player.MediaCache.clear()
+                launch(Dispatchers.Main) { refreshCacheSize() }
+            }
+        }
+        b.steeringKeys.setOnClickListener { openAccessibilitySettings() }
+
         b.keyTest.setOnClickListener { startActivity(Intent(this, KeyTestActivity::class.java)) }
         b.clearHistory.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { Db.get(this@SettingsActivity).clearHistory() }
@@ -78,6 +88,42 @@ class SettingsActivity : BaseActivity() {
             Prefs.language = lang
             Prefs.country = country
             App.instance.initExtractor()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshSteeringStatus()
+        refreshCacheSize()
+    }
+
+    private fun refreshCacheSize() {
+        lifecycleScope.launch {
+            val bytes = kotlinx.coroutines.withContext(Dispatchers.IO) { com.andro6tube.player.MediaCache.sizeBytes() }
+            b.clearCache.text = "Очистить кэш видео (%.0f МБ из %d)".format(
+                bytes / 1048576.0, com.andro6tube.player.MediaCache.MAX_BYTES / 1048576,
+            )
+        }
+    }
+
+    private fun refreshSteeringStatus() {
+        val on = com.andro6tube.keys.SteeringKeyService.isEnabled(this)
+        b.steeringKeys.text = if (on) "Кнопки руля: включено ✓" else "Включить кнопки руля"
+        b.steeringHint.text = if (on) {
+            "Проверьте в «Тесте кнопок»: при нажатии на руле должны появляться строки [A11y]."
+        } else {
+            "Откроются «Спецвозможности» Android → включите «Andro6Tube: кнопки руля».\n" +
+                "Если такого экрана в ГУ нет, выполните с компьютера:\n" +
+                com.andro6tube.keys.SteeringKeyService.ADB_ENABLE
+        }
+    }
+
+    private fun openAccessibilitySettings() {
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        } catch (e: android.content.ActivityNotFoundException) {
+            message("В этом ГУ нет экрана спецвозможностей. Включите через ADB:\n\n" +
+                com.andro6tube.keys.SteeringKeyService.ADB_ENABLE)
         }
     }
 
