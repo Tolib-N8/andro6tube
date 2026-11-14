@@ -124,9 +124,8 @@
                 android:layout_weight="1"
                 android:background="@drawable/bg_item"
                 android:focusable="true"
-                android:progressBackgroundTint="#33FFFFFF"
-                android:secondaryProgressTint="#99FFFFFF"
-                android:progressTint="@color/accent"
+                android:progressDrawable="@drawable/seek_track"
+                android:splitTrack="false"
                 android:thumbTint="@color/accent" />
 
             <TextView

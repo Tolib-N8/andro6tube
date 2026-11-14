@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Полоса прогресса: фон / скачано (диск или буфер) / просмотрено -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background" android:gravity="center_vertical|fill_horizontal">
+        <shape>
+            <size android:height="5dp" />
+            <solid android:color="#33FFFFFF" />
+            <corners android:radius="3dp" />
+        </shape>
+    </item>
+    <item android:id="@android:id/secondaryProgress" android:gravity="center_vertical|fill_horizontal">
+        <scale android:scaleWidth="100%">
+            <shape>
+                <size android:height="5dp" />
+                <solid android:color="#8CFFFFFF" />
+                <corners android:radius="3dp" />
+            </shape>
+        </scale>
+    </item>
+    <item android:id="@android:id/progress" android:gravity="center_vertical|fill_horizontal">
+        <scale android:scaleWidth="100%">
+            <shape>
+                <size android:height="5dp" />
+                <solid android:color="@color/accent" />
+                <corners android:radius="3dp" />
+            </shape>
+        </scale>
+    </item>
+</layer-list>

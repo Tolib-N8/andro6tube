@@ -54,7 +54,16 @@ class KeyTestActivity : ComponentActivity() {
     private fun statusLine(): String {
         val a11y = if (SteeringKeyService.isEnabled(this)) "вкл" else "ВЫКЛ (Настройки → Включить кнопки руля)"
         val logs = if (canReadLogs()) "вкл" else "выкл"
+        val svc = com.andro6tube.player.Playback.service
+        val player = when {
+            svc == null || com.andro6tube.player.Playback.state.value.current == null -> "нет видео"
+            svc.player.playWhenReady -> "играет"
+            else -> "пауза"
+        }
+        val focus = if (svc?.focusHeld == true) "у нас" else "НЕ у нас"
         return "Пути: [Окно] вкл · [A11y] $a11y · [Broadcast] вкл · [Session] вкл · [logcat] $logs\n" +
+            "Плеер: $player · аудиофокус: $focus\n" +
+            "Руль шлёт кнопки тому, кто последним играл звук: сначала запустите видео, потом откройте этот экран.\n" +
             "Если при нажатии на руле нет ни одной строки — ГУ шлёт сигнал своим способом, нужен ADB."
     }
 

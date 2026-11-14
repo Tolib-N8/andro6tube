@@ -183,7 +183,11 @@ class MainActivity : BaseActivity() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                setEmpty("Ошибка поиска: ${e.message ?: e.javaClass.simpleName}")
+                val offline = generateSequence<Throwable>(e) { it.cause }.take(8).any { it is java.io.IOException }
+                setEmpty(
+                    if (offline) "Нет интернета. Нажмите «Найти» ещё раз, когда связь появится."
+                    else "Ошибка поиска: ${e.message ?: e.javaClass.simpleName}"
+                )
             } finally {
                 b.progress.visibility = View.GONE
             }

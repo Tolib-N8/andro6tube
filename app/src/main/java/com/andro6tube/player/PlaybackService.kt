@@ -66,6 +66,11 @@ class PlaybackService : MediaSessionService() {
     var ownsMedia = false
         private set
 
+    private lateinit var focus: AudioFocus
+
+    /** Аудиофокус у нас — для диагностики в «Тесте кнопок». */
+    val focusHeld: Boolean get() = ::focus.isInitialized && focus.held
+
     private val st get() = Playback.mutableState
 
     override fun onCreate() {
@@ -100,7 +105,8 @@ class PlaybackService : MediaSessionService() {
                     .setUsage(C.USAGE_MEDIA)
                     .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build(),
-                /* handleAudioFocus= */ true, // навигатор приглушит/поставит на паузу
+                // Фокус держим сами (AudioFocus): ExoPlayer отдаёт его при каждой остановке
+                /* handleAudioFocus= */ false,
             )
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
@@ -108,6 +114,10 @@ class PlaybackService : MediaSessionService() {
             .setSeekForwardIncrementMs(10_000)
             .build()
 
+        focus = AudioFocus(this, exo) {
+            ownsMedia = false
+            KeyLog.add("[Session] звук забрало другое приложение — кнопки руля отданы ему")
+        }
         exo.addListener(playerListener)
         exo.addAnalyticsListener(object : AnalyticsListener {
             override fun onVideoDecoderInitialized(
@@ -157,6 +167,7 @@ class PlaybackService : MediaSessionService() {
         saveCurrentPosition()
         prefetcher.stop()
         ownsMedia = false
+        focus.abandon()
         Playback.service = null
         scope.cancel()
         session.release()
@@ -380,9 +391,14 @@ class PlaybackService : MediaSessionService() {
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-            if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) {
-                ownsMedia = false
-                KeyLog.add("[Session] звук забрало другое приложение — кнопки руля отданы ему")
+            // Любой запуск (экран, руль, уведомление, загрузка) — сначала берём аудиофокус
+            if (playWhenReady) {
+                if (focus.request()) {
+                    ownsMedia = true
+                } else {
+                    exo.playWhenReady = false
+                    st.value = st.value.copy(notice = "Звук занят другим приложением (звонок?)")
+                }
             }
         }
 
